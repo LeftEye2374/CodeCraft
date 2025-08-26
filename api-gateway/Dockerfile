@@ -2,6 +2,8 @@
 FROM eclipse-temurin:17-jdk AS deps
 WORKDIR /app
 
+
+
 # Копируем только pom.xml и mvnw
 COPY pom.xml .
 COPY .mvn/ .mvn
