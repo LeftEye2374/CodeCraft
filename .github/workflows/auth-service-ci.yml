@@ -1,0 +1,60 @@
+name: Auth Service CI
+
+on:
+  push:
+    paths:
+      - 'auth-service/**'  
+  pull_request:
+    paths:
+      - 'auth-service/**' 
+
+jobs:
+  test-and-build:
+    runs-on: ubuntu-latest
+    services:  # ← Добавляем сервисы для тестов (PostgreSQL и Redis)
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_DB: auth_test
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: password
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+      
+      redis:
+        image: redis:7-alpine
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 6379:6379
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v3
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+          cache: 'maven'
+
+      - name: Run Tests for Auth Service
+        run: cd auth-service && ./mvnw clean verify
+        env:  
+          SPRING_DATASOURCE_URL: jdbc:postgresql://localhost:5432/auth_test
+          SPRING_DATASOURCE_USERNAME: postgres
+          SPRING_DATASOURCE_PASSWORD: password
+          SPRING_REDIS_HOST: localhost
+          SPRING_REDIS_PORT: 6379
+
+      - name: Build Docker image
+        run: cd auth-service && docker build -t auth-service .
