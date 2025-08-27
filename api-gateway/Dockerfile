@@ -10,6 +10,9 @@ RUN chmod +x mvnw
 # Скачиваем зависимости (кэшируется)
 RUN ./mvnw dependency:go-offline -B
 
+
+
+
 # Вторая стадия: сборка приложения
 FROM eclipse-temurin:17-jdk AS builder
 WORKDIR /app
